@@ -99,58 +99,71 @@ const Game = (() => {
         return true;
     }
 
+    const FIXED_TIME_STEP = 1 / 60;
+    let accumulator = 0;
+
     function loop(timestamp) {
+        if (!lastTime) lastTime = timestamp;
         const dt = Math.min((timestamp - lastTime) / 1000, 0.05); // cap delta
         lastTime = timestamp;
 
-        // Update transitions
+        // Update transitions (runs at monitor refresh rate for smoothness)
         Transitions.update(dt);
 
-        // Update current screen (even during transitions for visual continuity)
-        let result = null;
+        accumulator += dt;
 
-        switch (currentState) {
-            case CONFIG.STATES.MAIN_MENU:
-                Background.update(0.5);
-                result = MainMenu.update(dt);
-                break;
-            case CONFIG.STATES.CHAR_SELECT:
-                Background.update(0.5);
-                result = CharSelect.update(dt);
-                break;
-            case CONFIG.STATES.GAMEPLAY:
-                result = Gameplay.update(dt);
-                break;
-            case CONFIG.STATES.PAUSE:
-                result = PauseMenu.update(dt);
-                break;
-            case CONFIG.STATES.ROUND_END:
-                result = RoundEnd.update(dt);
-                break;
-            case CONFIG.STATES.MATCH_WINNER:
-                result = MatchWinner.update(dt);
-                break;
-            case CONFIG.STATES.GAME_OVER_SP:
-                result = GameOverSP.update(dt);
-                break;
-        }
+        // Fixed timestep physics and logic (always 60 updates per second)
+        while (accumulator >= FIXED_TIME_STEP) {
+            let result = null;
 
-        // Handle state transitions (only if no active transition)
-        if (result && !Transitions.isActive()) {
-            if (result.next === 'RESUME') {
-                // Resume gameplay from pause
-                currentState = CONFIG.STATES.GAMEPLAY;
-                Audio.startGameMusic();
-            } else if (result.next === 'RESTART') {
-                // Restart current match
-                matchData.p1Wins = 0;
-                matchData.p2Wins = 0;
-                matchData.currentRound = 1;
-                setState(CONFIG.STATES.GAMEPLAY, { continueMatch: false });
-            } else {
-                // Use transition for other state changes
-                transitionTo(result.next, result);
+            switch (currentState) {
+                case CONFIG.STATES.MAIN_MENU:
+                    Background.update(0.5);
+                    result = MainMenu.update(FIXED_TIME_STEP);
+                    break;
+                case CONFIG.STATES.CHAR_SELECT:
+                    Background.update(0.5);
+                    result = CharSelect.update(FIXED_TIME_STEP);
+                    break;
+                case CONFIG.STATES.GAMEPLAY:
+                    result = Gameplay.update(FIXED_TIME_STEP);
+                    break;
+                case CONFIG.STATES.PAUSE:
+                    result = PauseMenu.update(FIXED_TIME_STEP);
+                    break;
+                case CONFIG.STATES.ROUND_END:
+                    result = RoundEnd.update(FIXED_TIME_STEP);
+                    break;
+                case CONFIG.STATES.MATCH_WINNER:
+                    result = MatchWinner.update(FIXED_TIME_STEP);
+                    break;
+                case CONFIG.STATES.GAME_OVER_SP:
+                    result = GameOverSP.update(FIXED_TIME_STEP);
+                    break;
             }
+
+            // Handle state transitions (only if no active transition)
+            if (result && !Transitions.isActive()) {
+                if (result.next === 'RESUME') {
+                    // Resume gameplay from pause
+                    currentState = CONFIG.STATES.GAMEPLAY;
+                    Audio.startGameMusic();
+                } else if (result.next === 'RESTART') {
+                    // Restart current match
+                    matchData.p1Wins = 0;
+                    matchData.p2Wins = 0;
+                    matchData.currentRound = 1;
+                    setState(CONFIG.STATES.GAMEPLAY, { continueMatch: false });
+                } else {
+                    // Use transition for other state changes
+                    transitionTo(result.next, result);
+                }
+            }
+
+            // End-of-logic-frame input reset
+            Input.endFrame();
+
+            accumulator -= FIXED_TIME_STEP;
         }
 
         // Draw current screen
@@ -185,9 +198,6 @@ const Game = (() => {
         if (Transitions.isActive()) {
             Transitions.draw();
         }
-
-        // End-of-frame input reset
-        Input.endFrame();
 
         requestAnimationFrame(loop);
     }
