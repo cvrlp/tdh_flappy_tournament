@@ -116,6 +116,57 @@ const Characters = (() => {
         }
     ];
 
+    // Lighten a hex color toward white by amount (0..1)
+    function lighten(hex, amount) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return rgbToHex(
+            Math.round(r + (255 - r) * amount),
+            Math.round(g + (255 - g) * amount),
+            Math.round(b + (255 - b) * amount)
+        );
+    }
+
+    // Darken a hex color toward black by amount (0..1)
+    function darken(hex, amount) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return rgbToHex(
+            Math.round(r * (1 - amount)),
+            Math.round(g * (1 - amount)),
+            Math.round(b * (1 - amount))
+        );
+    }
+
+    function rgbToHex(r, g, b) {
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
+    // Draws the bird's silhouette (body + crest + beak + wing) in a single color.
+    // Body is an egg shape — tapered top and bottom for a rounder, more modern feel.
+    function drawSilhouetteMask(ctx, x, y, s, color, flapFrame) {
+        ctx.fillStyle = color;
+        // Body — staircase tapered corners (egg/oval)
+        fillBlock(ctx, x + s*4, y + s*1,  s*6,  s*1);   // top    cap (cols 4-9)
+        fillBlock(ctx, x + s*3, y + s*2,  s*8,  s*1);   // upper  (cols 3-10)
+        fillBlock(ctx, x + s*2, y + s*3,  s*10, s*7);   // middle (cols 2-11, 7 rows)
+        fillBlock(ctx, x + s*3, y + s*10, s*8,  s*1);   // lower  (cols 3-10)
+        fillBlock(ctx, x + s*4, y + s*11, s*6,  s*1);   // bottom cap (cols 4-9)
+        // Crest
+        fillBlock(ctx, x + s*5, y, s*4, s*2);
+        fillBlock(ctx, x + s*6, y - s, s*2, s*1);
+        // Beak
+        fillBlock(ctx, x + s*12, y + s*5, s*3, s*2);
+        fillBlock(ctx, x + s*13, y + s*4, s*1, s*1);
+        // Wing (matches body draw below)
+        const wingY = flapFrame === 0 ? y + s*3 :
+                       flapFrame === 2 ? y + s*8 : y + s*5;
+        fillBlock(ctx, x, wingY, s*4, s*3);
+        fillBlock(ctx, x - s, wingY + s, s*1, s*2);
+    }
+
     // Draw a pixel bird on a canvas context
     // flapFrame: 0 = wings up, 1 = wings mid, 2 = wings down (animation)
     function drawBird(ctx, char, x, y, size, flapFrame = 0, facingRight = true, dead = false) {
@@ -130,18 +181,42 @@ const Characters = (() => {
             ctx.translate(-(x + size / 2), 0);
         }
 
-        // Body (rounded square shape)
+        // === Silhouette outline — 1px dark ring around the whole bird ===
+        // Drawn first so body parts cover it, leaving only the edge pixels.
+        const outline = '#141414';
+        drawSilhouetteMask(ctx, x + 1, y,     s, outline, flapFrame);
+        drawSilhouetteMask(ctx, x - 1, y,     s, outline, flapFrame);
+        drawSilhouetteMask(ctx, x,     y + 1, s, outline, flapFrame);
+        drawSilhouetteMask(ctx, x,     y - 1, s, outline, flapFrame);
+
+        // Body — egg/oval shape with tapered top & bottom for a rounder silhouette
         ctx.fillStyle = char.body;
-        fillBlock(ctx, x + s*2, y + s*2, s*10, s*9);
-        // Top curve
-        fillBlock(ctx, x + s*3, y + s*1, s*8, s*1);
-        // Bottom curve
-        fillBlock(ctx, x + s*3, y + s*11, s*8, s*1);
+        fillBlock(ctx, x + s*4, y + s*1,  s*6,  s*1);   // top    cap (cols 4-9)
+        fillBlock(ctx, x + s*3, y + s*2,  s*8,  s*1);   // upper  (cols 3-10)
+        fillBlock(ctx, x + s*2, y + s*3,  s*10, s*7);   // middle (cols 2-11)
+        fillBlock(ctx, x + s*3, y + s*10, s*8,  s*1);   // lower  (cols 3-10)
+        fillBlock(ctx, x + s*4, y + s*11, s*6,  s*1);   // bottom cap (cols 4-9)
+
+        // Body highlight — light from upper-left, following the round corner
+        ctx.fillStyle = lighten(char.body, 0.28);
+        fillBlock(ctx, x + s*4, y + s*1, s*3, s*1);   // top cap left half
+        fillBlock(ctx, x + s*3, y + s*2, s*1, s*1);   // upper corner pixel
+        fillBlock(ctx, x + s*2, y + s*3, s*1, s*2);   // upper-left edge
+
+        // Body shadow — bottom-right, following the round corner
+        ctx.fillStyle = darken(char.body, 0.22);
+        fillBlock(ctx, x + s*11, y + s*7,  s*1, s*3);   // right edge rows 7-9
+        fillBlock(ctx, x + s*10, y + s*10, s*1, s*1);   // lower-right corner pixel
+        fillBlock(ctx, x + s*7,  y + s*11, s*3, s*1);   // bottom cap right half
 
         // Belly
         ctx.fillStyle = char.belly;
         fillBlock(ctx, x + s*3, y + s*6, s*6, s*4);
         fillBlock(ctx, x + s*4, y + s*10, s*4, s*1);
+
+        // Belly highlight — slim top stripe
+        ctx.fillStyle = lighten(char.belly, 0.4);
+        fillBlock(ctx, x + s*3, y + s*6, s*2, s*1);
 
         // Crest / hat (on top)
         ctx.fillStyle = char.crest;
@@ -159,6 +234,9 @@ const Characters = (() => {
         ctx.fillStyle = char.beak;
         fillBlock(ctx, x + s*12, y + s*5, s*3, s*2);
         fillBlock(ctx, x + s*13, y + s*4, s*1, s*1);
+        // Beak shadow (subtle bottom edge)
+        ctx.fillStyle = darken(char.beak, 0.35);
+        fillBlock(ctx, x + s*12, y + s*6 + s*0.5, s*3, s*0.5);
 
         // Wing
         ctx.fillStyle = char.wing;
@@ -166,6 +244,10 @@ const Characters = (() => {
                        flapFrame === 2 ? y + s*8 : y + s*5;
         fillBlock(ctx, x, wingY, s*4, s*3);
         fillBlock(ctx, x - s, wingY + s, s*1, s*2);
+
+        // Wing highlight — slim stripe on inner edge so the wing has volume
+        ctx.fillStyle = lighten(char.wing, 0.35);
+        fillBlock(ctx, x + s*3, wingY, s*1, s*1);
 
         // Accent detail (small stripe or marking)
         ctx.fillStyle = char.accent;
@@ -246,16 +328,12 @@ const Characters = (() => {
                 break;
         }
 
-        // Outline (dark border for visibility)
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        // Top outline
-        fillBlock(ctx, x + s*3, y + s*1 - 1, s*8, 1);
-        // Bottom outline
-        fillBlock(ctx, x + s*3, y + s*12, s*8, 1);
-        // Left outline
-        fillBlock(ctx, x + s*2 - 1, y + s*2, 1, s*9);
-        // Right outline
-        fillBlock(ctx, x + s*12, y + s*2, 1, s*5);
+        // Eye sparkle — drawn last so it lands on top of glasses, monocle, etc.
+        // Marketing wears opaque sunglasses with its own glare, skip there.
+        if (char.id !== 2) {
+            ctx.fillStyle = '#FFFFFF';
+            fillBlock(ctx, x + s*11, y + s*4, s*0.6, s*0.6);
+        }
 
         ctx.restore();
     }
@@ -492,12 +570,17 @@ const Characters = (() => {
         const pixelSize = size / 24;
 
         ctx.save();
+
+        // Pixel codes that should get a top-edge highlight when the cell above
+        // is outline ('0') or empty ('.') — gives "lit from above" volume.
+        const HIGHLIGHTABLE = '12378'; // body, belly, wing, crest, accent
+
         for (let row = 0; row < 24; row++) {
             for (let col = 0; col < 24; col++) {
                 const p = grid[row][col];
                 if (p === '.') continue;
-                
-                let color = '#000'; // 0
+
+                let color = '#000'; // 0 = outline
                 switch(p) {
                     case '1': color = char.body; break;
                     case '2': color = char.belly; break;
@@ -511,7 +594,29 @@ const Characters = (() => {
                     case 'A': color = '#FFFFFF'; break;
                     case 'B': color = '#555555'; break; // Grey
                 }
-                
+
+                // Top-edge highlight: cells whose neighbor above is outline/empty
+                if (HIGHLIGHTABLE.includes(p) && row > 0) {
+                    const above = grid[row - 1][col];
+                    if (above === '.' || above === '0') {
+                        color = lighten(color, 0.28);
+                    }
+                }
+
+                // Bottom-edge shadow on the same color types for volume on the underside
+                if (HIGHLIGHTABLE.includes(p) && row < 23) {
+                    const below = grid[row + 1][col];
+                    if (below === '.' || below === '0') {
+                        color = darken(color, 0.18);
+                    }
+                }
+
+                // Eye sparkle: top-left corner pixel of any pupil cluster gets a white dot
+                if (p === '6' && row > 0 && col > 0 &&
+                    grid[row - 1][col] === '5' && grid[row][col - 1] === '5') {
+                    color = '#FFFFFF';
+                }
+
                 ctx.fillStyle = color;
                 fillBlock(ctx, x + col * pixelSize, y + row * pixelSize, pixelSize + 0.5, pixelSize + 0.5);
             }
