@@ -10,6 +10,8 @@ const CONFIG = {
     // Game states
     STATES: {
         MAIN_MENU: 'MAIN_MENU',
+        DIFFICULTY_SELECT: 'DIFFICULTY_SELECT',
+        SCOREBOARD: 'SCOREBOARD',
         CHAR_SELECT: 'CHAR_SELECT',
         GAMEPLAY: 'GAMEPLAY',
         PAUSE: 'PAUSE',
@@ -22,6 +24,13 @@ const CONFIG = {
     MODES: {
         SINGLE_PLAYER: 'SINGLE_PLAYER',
         MULTIPLAYER: 'MULTIPLAYER'
+    },
+
+    // Difficulty IDs
+    DIFFICULTIES: {
+        NORMAL:   'NORMAL',
+        HARD:     'HARD',
+        CALAMITY: 'CALAMITY'
     },
 
     // Physics
@@ -62,6 +71,10 @@ const CONFIG = {
     PALETTE_DUSK:  { skyTop: '#ff7e5f', skyBottom: '#feb47b', ground: '#5d4037', groundDark: '#3e2723' },
     PALETTE_NIGHT: { skyTop: '#0d1421', skyBottom: '#1a1a2e', ground: '#1f1f2e', groundDark: '#0f0f1c' },
     PALETTE_DAWN:  { skyTop: '#7e57c2', skyBottom: '#ffab91', ground: '#6d4c41', groundDark: '#4e342e' },
+    PALETTE_STORM:      { skyTop: '#1e2024', skyBottom: '#0b0c0f', ground: '#2a1b15', groundDark: '#100806' },
+    PALETTE_BLOOD_MOON: { skyTop: '#2a0e10', skyBottom: '#150506', ground: '#3a1410', groundDark: '#1d0808' },
+    PALETTE_ASHFALL:    { skyTop: '#2a1812', skyBottom: '#13080a', ground: '#221208', groundDark: '#0d0604' },
+    PALETTE_ECLIPSE:    { skyTop: '#08080f', skyBottom: '#020207', ground: '#181822', groundDark: '#08080e' },
 
     // Rounds
     ROUNDS_TO_WIN: 2,
@@ -96,9 +109,82 @@ const CONFIG = {
     // UI
     MENU_BLINK_SPEED: 500, // ms
 
-    // High score key
-    HIGH_SCORE_KEY: 'tdh_flappy_highscore',
+    // Scoreboard storage — JSON arrays of { score, charId, name } per difficulty.
+    SCORES_KEY_PREFIX: 'tdh_flappy_scores_',
+    SCOREBOARD_SIZE: 5,
+    // Legacy storage keys cleared on startup so old shapes can't bleed into
+    // the new {score, charId, name} scoreboard.
+    LEGACY_HIGH_SCORE_KEY: 'tdh_flappy_highscore',
+    LEGACY_HIGHSCORE_PREFIX: 'tdh_flappy_highscore_',
 
     // Toggle for CRT effect
-    RETRO_MODE: true
+    RETRO_MODE: true,
+
+    // Per-difficulty presets. Game.activeDifficulty selects which is in use.
+    // NORMAL = pre-day/night, no moving pipes (classic).
+    // HARD   = current default (moving pipes after lvl 4, day/night cycle).
+    // CALAMITY = faster + earlier moving pipes + faster day/night, still beatable.
+    DIFFICULTY_PRESETS: {
+        NORMAL: {
+            label: 'NORMAL',
+            color: '#4CAF50',
+            tagline: 'CLASSIC FLAPPY',
+            pipeSpeed: 2.8,
+            pipeSpeedMax: 5.5,
+            pipeGap: 130,
+            pipeGapMin: 75,
+            pipeSpawnDist: 240,
+            speedIncrease: 0.2,
+            gapShrink: 4,
+            movingPipes: false,
+            oscStartLevel: 999,
+            oscAmpStep: 0,
+            oscAmpMax: 0,
+            oscFreq: 0,
+            dayNight: false,
+            dayNightPeriod: 0
+        },
+        HARD: {
+            label: 'HARD',
+            color: '#FFD700',
+            tagline: 'MOVING PIPES + DAY/NIGHT',
+            pipeSpeed: 3.2,
+            pipeSpeedMax: 6.2,
+            pipeGap: 130,
+            pipeGapMin: 75,
+            pipeSpawnDist: 240,
+            speedIncrease: 0.22,
+            gapShrink: 4,
+            movingPipes: true,
+            oscStartLevel: 4,
+            oscAmpStep: 8,
+            oscAmpMax: 40,
+            oscFreq: 1.5,
+            dayNight: true,
+            dayNightPeriod: 120
+        },
+        CALAMITY: {
+            label: 'CALAMITY',
+            color: '#FF3D3D',
+            tagline: 'ABANDON ALL HOPE',
+            pipeSpeed: 3.8,
+            pipeSpeedMax: 7.2,
+            pipeGap: 120,
+            pipeGapMin: 70,
+            pipeSpawnDist: 215,
+            speedIncrease: 0.28,
+            gapShrink: 5,
+            movingPipes: true,
+            oscStartLevel: 2,
+            oscAmpStep: 10,
+            oscAmpMax: 55,
+            oscFreq: 2.0,
+            dayNight: false,            // weather rotation replaces day/night
+            dayNightPeriod: 0,
+            weather: 'calamity',         // rotates 4 conditions (storm, blood moon, ashfall, eclipse)
+            weatherDuration: 28,         // seconds per condition
+            weatherTransition: 4,        // crossfade window into the next condition
+            lightningChancePerSec: 0.45  // only fires during STORM phase
+        }
+    }
 };

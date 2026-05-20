@@ -6,25 +6,27 @@
 const Pipes = (() => {
     const ctx = Renderer.ctx;
     let pipes = [];
-    let speed = CONFIG.PIPE_SPEED;
-    let gap = CONFIG.PIPE_GAP;
+    let preset = CONFIG.DIFFICULTY_PRESETS.HARD;
+    let speed = preset.pipeSpeed;
+    let gap = preset.pipeGap;
     let spawnTimer = 0;
     let oscTime = 0; // shared phase for moving pipes
 
     function reset() {
+        preset = CONFIG.DIFFICULTY_PRESETS[Game.getDifficulty()] || CONFIG.DIFFICULTY_PRESETS.HARD;
         pipes = [];
-        speed = CONFIG.PIPE_SPEED;
-        gap = CONFIG.PIPE_GAP;
-        spawnTimer = CONFIG.PIPE_SPAWN_DIST;
+        speed = preset.pipeSpeed;
+        gap = preset.pipeGap;
+        spawnTimer = preset.pipeSpawnDist;
         oscTime = 0;
     }
 
     // How much vertical wobble a pipe gets at the current difficulty level.
-    // Returns 0 below CONFIG.PIPE_OSC_START_LEVEL.
+    // Returns 0 if the active difficulty doesn't allow moving pipes yet.
     function computeAmplitude(level) {
-        if (level < CONFIG.PIPE_OSC_START_LEVEL) return 0;
-        const stepsOver = level - CONFIG.PIPE_OSC_START_LEVEL + 1;
-        return Math.min(CONFIG.PIPE_OSC_AMPLITUDE_MAX, stepsOver * CONFIG.PIPE_OSC_AMPLITUDE_STEP);
+        if (!preset.movingPipes || level < preset.oscStartLevel) return 0;
+        const stepsOver = level - preset.oscStartLevel + 1;
+        return Math.min(preset.oscAmpMax, stepsOver * preset.oscAmpStep);
     }
 
     function addPipe(amplitude) {
@@ -51,8 +53,8 @@ const Pipes = (() => {
     function update(dt, score) {
         // Difficulty scaling
         const level = Math.floor(score / CONFIG.DIFFICULTY_INTERVAL);
-        speed = Math.min(CONFIG.PIPE_SPEED + level * CONFIG.SPEED_INCREASE, CONFIG.PIPE_SPEED_MAX);
-        gap = Math.max(CONFIG.PIPE_GAP - level * CONFIG.GAP_SHRINK_AMOUNT, CONFIG.PIPE_GAP_MIN);
+        speed = Math.min(preset.pipeSpeed + level * preset.speedIncrease, preset.pipeSpeedMax);
+        gap = Math.max(preset.pipeGap - level * preset.gapShrink, preset.pipeGapMin);
         const amplitude = computeAmplitude(level);
         oscTime += dt;
 
@@ -61,7 +63,7 @@ const Pipes = (() => {
             const p = pipes[i];
             p.x -= speed;
             if (p.oscAmplitude > 0) {
-                const offset = Math.sin(oscTime * CONFIG.PIPE_OSC_FREQ + p.oscPhase) * p.oscAmplitude;
+                const offset = Math.sin(oscTime * preset.oscFreq + p.oscPhase) * p.oscAmplitude;
                 p.topH = p.baseTopH + offset;
                 p.bottomY = p.baseBottomY + offset;
             }
@@ -72,7 +74,7 @@ const Pipes = (() => {
 
         // Spawn new pipes — amplitude snapshotted at spawn so each pipe ramps with difficulty
         spawnTimer += speed;
-        if (spawnTimer >= CONFIG.PIPE_SPAWN_DIST) {
+        if (spawnTimer >= preset.pipeSpawnDist) {
             addPipe(amplitude);
             spawnTimer = 0;
         }

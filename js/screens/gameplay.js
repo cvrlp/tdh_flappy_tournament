@@ -55,6 +55,7 @@ const Gameplay = (() => {
         Pipes.reset();
         Particles.clear();
         Background.resetScroll();
+        Background.resetWeather();
 
         countdown = CONFIG.COUNTDOWN_DURATION;
         countdownTimer = 0;
@@ -277,6 +278,9 @@ const Gameplay = (() => {
         if (bird1) bird1.draw();
         Particles.draw();
 
+        // Lightning flash overlay (Calamity storm) — drawn over gameplay layer
+        Background.drawLightning();
+
         ctx.restore();
 
         drawHUD();
@@ -388,9 +392,18 @@ const Gameplay = (() => {
 
             // Round number
             Renderer.drawText(`R${currentRound}`, W / 2, 52, 6, 'rgba(255,255,255,0.2)', 'center', false);
+
+            drawDifficultyTag(W / 2, 66);
         } else {
             Renderer.drawText(bird1.score.toString(), W / 2, 36, 22, '#FFF', 'center');
+            drawDifficultyTag(W / 2, 60);
         }
+    }
+
+    function drawDifficultyTag(x, y) {
+        const preset = CONFIG.DIFFICULTY_PRESETS[Game.getDifficulty()];
+        if (!preset) return;
+        Renderer.drawText(preset.label, x, y, 6, preset.color, 'center', false);
     }
 
     function getBirds() { return { bird1, bird2 }; }

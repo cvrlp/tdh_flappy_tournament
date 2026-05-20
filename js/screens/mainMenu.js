@@ -6,7 +6,7 @@
 const MainMenu = (() => {
     const ctx = Renderer.ctx;
     let selectedIndex = 0;
-    const options = ['VS MODE', 'SOLO MODE'];
+    const options = ['VS MODE', 'SOLO MODE', 'SCOREBOARD'];
     let animTimer = 0;
     let titleBounce = 0;
     let musicStarted = false;
@@ -47,9 +47,11 @@ const MainMenu = (() => {
         if (Input.isConfirm()) {
             Audio.menuConfirm();
             if (selectedIndex === 0) {
-                return { next: CONFIG.STATES.CHAR_SELECT, mode: CONFIG.MODES.MULTIPLAYER };
+                return { next: CONFIG.STATES.DIFFICULTY_SELECT, mode: CONFIG.MODES.MULTIPLAYER };
+            } else if (selectedIndex === 1) {
+                return { next: CONFIG.STATES.DIFFICULTY_SELECT, mode: CONFIG.MODES.SINGLE_PLAYER };
             } else {
-                return { next: CONFIG.STATES.CHAR_SELECT, mode: CONFIG.MODES.SINGLE_PLAYER };
+                return { next: CONFIG.STATES.SCOREBOARD };
             }
         }
 
@@ -64,29 +66,29 @@ const MainMenu = (() => {
         const cy = CONFIG.HEIGHT / 2;
 
         // TDH text
-        Renderer.drawTextOutlined('TDH', cx, cy - 110 + titleBounce, 16, '#FFFFFF', '#000');
+        Renderer.drawTextOutlined('TDH', cx, cy - 150 + titleBounce, 22, '#FFFFFF', '#000');
 
-        // FLAPPY with glow
+        // FLAPPY with glow — main logo, large
         ctx.shadowColor = '#FFD700';
-        ctx.shadowBlur = 10 + Math.sin(animTimer * 3) * 5;
-        Renderer.drawTextOutlined('FLAPPY', cx, cy - 70 + titleBounce, 28, '#FFD700', '#000');
+        ctx.shadowBlur = 18 + Math.sin(animTimer * 3) * 8;
+        Renderer.drawTextOutlined('FLAPPY', cx, cy - 90 + titleBounce, 56, '#FFD700', '#000');
         ctx.shadowBlur = 0;
 
         // TOURNAMENT
-        Renderer.drawTextOutlined('TOURNAMENT', cx, cy - 30 + titleBounce, 14, '#EF5350', '#000');
+        Renderer.drawTextOutlined('TOURNAMENT', cx, cy - 30 + titleBounce, 20, '#EF5350', '#000');
 
-        // Decorative birds
+        // Decorative birds — pushed to outer edges so they don't clash with the bigger logo
         const char0 = Characters.getCharacter(0);
         const char1 = Characters.getCharacter(1);
         const flapAnim = Math.floor(animTimer * 6) % 3;
         const birdFloat = Math.sin(animTimer * 2.5) * 4;
-        Characters.drawBird(ctx, char0, cx - 200, cy - 90 + titleBounce + birdFloat, 36, flapAnim, true);
-        Characters.drawBird(ctx, char1, cx + 165, cy - 90 + titleBounce - birdFloat, 36, flapAnim, false);
+        Characters.drawBird(ctx, char0, cx - 340, cy - 110 + titleBounce + birdFloat, 36, flapAnim, true);
+        Characters.drawBird(ctx, char1, cx + 305, cy - 110 + titleBounce - birdFloat, 36, flapAnim, false);
 
         // Menu options
         const menuY = cy + 40;
         for (let i = 0; i < options.length; i++) {
-            const y = menuY + i * 40;
+            const y = menuY + i * 34;
             const selected = i === selectedIndex;
 
             if (selected) {
@@ -103,8 +105,8 @@ const MainMenu = (() => {
         }
 
         // Controls hint
-        Renderer.drawText('W/S or ▲/▼ TO SELECT', cx, cy + 140, 8, '#FFF', 'center', false);
-        Renderer.drawBlinkText('PRESS SPACE/ENTER TO START', cx, cy + 160, 8, '#EEE', 'center', 600);
+        Renderer.drawText('W/S or ▲/▼ TO SELECT', cx, cy + 160, 8, '#FFF', 'center', false);
+        Renderer.drawBlinkText('PRESS SPACE/ENTER TO START', cx, cy + 180, 8, '#EEE', 'center', 600);
 
         // Mute and Retro Mode indicators
         const muteText = Audio.isMuted() ? '🔇 MUTED' : '🔊 M=MUTE';

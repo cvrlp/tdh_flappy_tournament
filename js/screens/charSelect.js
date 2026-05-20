@@ -52,7 +52,7 @@ const CharSelect = (() => {
         if (Input.isBack()) {
             Audio.menuBack();
             exit();
-            return { next: CONFIG.STATES.MAIN_MENU };
+            return { next: CONFIG.STATES.DIFFICULTY_SELECT, mode: mode };
         }
 
         // P1 controls (WASD) — single row so only left/right

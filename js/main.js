@@ -6,6 +6,7 @@
 const Game = (() => {
     let currentState = CONFIG.STATES.MAIN_MENU;
     let gameMode = CONFIG.MODES.MULTIPLAYER;
+    let difficulty = CONFIG.DIFFICULTIES.HARD;
     let lastTime = 0;
 
     // Match data persisted between screens
@@ -21,8 +22,64 @@ const Game = (() => {
     function init() {
         Audio.init();
         Input.init();
+        clearLegacyHighScore();
         MainMenu.enter();
         requestAnimationFrame(loop);
+    }
+
+    // Clear old score formats so they can't pollute the new {score, charId, name} arrays.
+    // - Pre-difficulty single shared high score.
+    // - Per-difficulty single-number keys (older transitional format).
+    function clearLegacyHighScore() {
+        try {
+            if (localStorage.getItem(CONFIG.LEGACY_HIGH_SCORE_KEY) !== null) {
+                localStorage.removeItem(CONFIG.LEGACY_HIGH_SCORE_KEY);
+            }
+            for (const id of Object.keys(CONFIG.DIFFICULTIES)) {
+                const k = CONFIG.LEGACY_HIGHSCORE_PREFIX + id;
+                if (localStorage.getItem(k) !== null) localStorage.removeItem(k);
+            }
+        } catch (e) {
+            // localStorage may be unavailable (private mode, etc.) — fine to skip.
+        }
+    }
+
+    function scoresKey(difficultyId) {
+        return CONFIG.SCORES_KEY_PREFIX + (difficultyId || difficulty);
+    }
+
+    // Returns top-N array sorted desc: [{score, charId, name}, ...]
+    function getScores(difficultyId) {
+        try {
+            const raw = localStorage.getItem(scoresKey(difficultyId));
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) { return []; }
+    }
+
+    function getHighScore(difficultyId) {
+        const list = getScores(difficultyId);
+        return list.length ? list[0].score : 0;
+    }
+
+    // Insert a run into the scoreboard. Returns the inserted entry's 0-based
+    // rank (or -1 if it didn't make the cut).
+    function recordScore(score, charId, name, difficultyId) {
+        const list = getScores(difficultyId);
+        const entry = {
+            score: score | 0,
+            charId: charId | 0,
+            name: (name || '?').toString().slice(0, 16)
+        };
+        list.push(entry);
+        list.sort((a, b) => b.score - a.score);
+        const trimmed = list.slice(0, CONFIG.SCOREBOARD_SIZE);
+        try {
+            localStorage.setItem(scoresKey(difficultyId), JSON.stringify(trimmed));
+        } catch (e) { /* ignore */ }
+        const rank = trimmed.indexOf(entry);
+        return rank;
     }
 
     function setState(newState, data) {
@@ -33,8 +90,20 @@ const Game = (() => {
                 MainMenu.enter();
                 break;
 
+            case CONFIG.STATES.DIFFICULTY_SELECT:
+                if (data && data.mode) gameMode = data.mode;
+                Audio.stopMusic();
+                DifficultySelect.enter(gameMode);
+                break;
+
+            case CONFIG.STATES.SCOREBOARD:
+                Audio.stopMusic();
+                Scoreboard.enter();
+                break;
+
             case CONFIG.STATES.CHAR_SELECT:
                 if (data && data.mode) gameMode = data.mode;
+                if (data && data.difficulty) difficulty = data.difficulty;
                 Audio.stopMusic();
                 CharSelect.enter(gameMode);
                 break;
@@ -125,6 +194,14 @@ const Game = (() => {
                     Background.update(0.5, FIXED_TIME_STEP);
                     result = MainMenu.update(FIXED_TIME_STEP);
                     break;
+                case CONFIG.STATES.DIFFICULTY_SELECT:
+                    Background.update(0.5, FIXED_TIME_STEP);
+                    result = DifficultySelect.update(FIXED_TIME_STEP);
+                    break;
+                case CONFIG.STATES.SCOREBOARD:
+                    Background.update(0.5, FIXED_TIME_STEP);
+                    result = Scoreboard.update(FIXED_TIME_STEP);
+                    break;
                 case CONFIG.STATES.CHAR_SELECT:
                     Background.update(0.5, FIXED_TIME_STEP);
                     result = CharSelect.update(FIXED_TIME_STEP);
@@ -177,6 +254,12 @@ const Game = (() => {
             case CONFIG.STATES.MAIN_MENU:
                 MainMenu.draw();
                 break;
+            case CONFIG.STATES.DIFFICULTY_SELECT:
+                DifficultySelect.draw();
+                break;
+            case CONFIG.STATES.SCOREBOARD:
+                Scoreboard.draw();
+                break;
             case CONFIG.STATES.CHAR_SELECT:
                 CharSelect.draw();
                 break;
@@ -207,8 +290,20 @@ const Game = (() => {
     }
 
     function getState() { return currentState; }
+    function getDifficulty() { return difficulty; }
+    function setDifficulty(d) {
+        if (CONFIG.DIFFICULTY_PRESETS[d]) difficulty = d;
+    }
 
-    return { init, getState };
+    return {
+        init,
+        getState,
+        getDifficulty,
+        setDifficulty,
+        getHighScore,
+        getScores,
+        recordScore
+    };
 })();
 
 // Global mute toggle (M key) and Retro Mode toggle (V key)

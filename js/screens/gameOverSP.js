@@ -38,18 +38,18 @@ const GameOverSP = (() => {
         currentQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
         Audio.stopMusic();
 
-        // High score
-        highScore = parseInt(localStorage.getItem(CONFIG.HIGH_SCORE_KEY) || '0', 10);
-        isNewHighScore = data.score > highScore;
-        if (isNewHighScore) {
-            highScore = data.score;
-            localStorage.setItem(CONFIG.HIGH_SCORE_KEY, highScore.toString());
-        }
+        // High score (per current difficulty). Capture the best BEFORE recording
+        // this run so we can tell whether the run just set a new top score.
+        const previousBest = Game.getHighScore();
+        Game.recordScore(data.score, data.charId, data.name);
+        highScore = Game.getHighScore();
+        isNewHighScore = data.score > 0 && data.score > previousBest;
     }
 
     function update(dt) {
         timer += dt;
-        if (timer > 1.5) canContinue = true;
+        // Tiny debounce so the flap key held at moment of death doesn't auto-confirm.
+        if (timer > 0.25) canContinue = true;
 
         if (canContinue) {
             if (Input.isMenuDown()) {
@@ -82,49 +82,58 @@ const GameOverSP = (() => {
 
     function draw() {
         Background.drawAll();
-        Renderer.drawOverlay(0.65);
+        Renderer.drawOverlay(0.78);
 
         const cx = CONFIG.WIDTH / 2;
 
-        // Quote (above GAME OVER)
+        // Quote — large, central, immediately visible (no fade-in so retry is instant).
         if (currentQuote) {
-            Renderer.drawText(currentQuote.text, cx, 55, 7, '#CCCCCC', 'center', true);
-            Renderer.drawText(`— ${currentQuote.by}`, cx, 85, 6, '#888888', 'center', true);
+            const lines = wrapText(currentQuote.text, 48);
+            const lineH = 18;
+            const firstLineY = 55;
+            lines.forEach((line, i) => {
+                Renderer.drawTextOutlined(line, cx, firstLineY + i * lineH, 10, '#FFFFFF', '#000');
+            });
+            const authorY = firstLineY + lines.length * lineH + 8;
+            Renderer.drawText(`— ${currentQuote.by}`, cx, authorY, 8, '#FFD700', 'center', true);
         }
 
-        Renderer.drawTextOutlined('GAME OVER', cx, 120, 18, '#EF5350', '#000');
+        Renderer.drawTextOutlined('GAME OVER', cx, 175, 14, '#EF5350', '#000');
 
         // Bird
         if (data) {
             const char = Characters.getCharacter(data.charId);
             const flapAnim = Math.floor(timer * 3) % 3;
-            Characters.drawBird(ctx, char, cx - 25, 160, 50, flapAnim, true);
+            Characters.drawBird(ctx, char, cx - 20, 200, 40, flapAnim, true);
 
-            Renderer.drawText(data.name, cx, 230, 8, '#FFF', 'center');
+            Renderer.drawText(data.name, cx, 258, 8, '#FFF', 'center');
         }
 
         // Score
-        Renderer.drawText('SCORE', cx, 265, 7, '#AAA', 'center', false);
-        Renderer.drawTextOutlined(data ? data.score.toString() : '0', cx, 295, 24, '#FFD700', '#000');
+        Renderer.drawText('SCORE', cx, 285, 7, '#AAA', 'center', false);
+        Renderer.drawTextOutlined(data ? data.score.toString() : '0', cx, 310, 20, '#FFD700', '#000');
 
-        // High score
-        Renderer.drawText('BEST', cx, 330, 7, '#AAA', 'center', false);
-        Renderer.drawText(highScore.toString(), cx, 355, 12, '#4FC3F7', 'center');
+        // High score (label includes difficulty so per-tier bests are clear)
+        const diff = CONFIG.DIFFICULTY_PRESETS[Game.getDifficulty()];
+        const diffLabel = diff ? diff.label : '';
+        Renderer.drawText(`BEST (${diffLabel})`, cx, 340, 7, '#AAA', 'center', false);
+        Renderer.drawText(highScore.toString(), cx, 360, 11, diff ? diff.color : '#4FC3F7', 'center');
 
         if (isNewHighScore) {
             const glow = Math.sin(timer * 6) * 0.3 + 0.7;
+            ctx.save();
             ctx.globalAlpha = glow;
             Renderer.drawTextOutlined('★ NEW HIGH SCORE! ★', cx, 385, 7, '#FFD700', '#000');
-            ctx.globalAlpha = 1;
+            ctx.restore();
         }
 
         Particles.draw();
 
         // Menu options
         if (canContinue) {
-            const menuY = isNewHighScore ? 410 : 395;
+            const menuY = isNewHighScore ? 408 : 400;
             for (let i = 0; i < options.length; i++) {
-                const y = menuY + i * 24;
+                const y = menuY + i * 20;
                 const selected = i === selectedOption;
 
                 if (selected) {
@@ -137,6 +146,24 @@ const GameOverSP = (() => {
 
         Renderer.drawCRT();
         Transitions.draw();
+    }
+
+    // Word-wrap to keep lines roughly within maxLineChars without breaking words.
+    function wrapText(text, maxLineChars) {
+        const words = text.split(' ');
+        const lines = [];
+        let line = '';
+        for (const w of words) {
+            const candidate = line ? line + ' ' + w : w;
+            if (candidate.length > maxLineChars && line) {
+                lines.push(line);
+                line = w;
+            } else {
+                line = candidate;
+            }
+        }
+        if (line) lines.push(line);
+        return lines;
     }
 
     return { enter, update, draw };

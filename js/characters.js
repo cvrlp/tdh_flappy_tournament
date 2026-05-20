@@ -11,13 +11,14 @@ const Characters = (() => {
             id: 0,
             team: 'Technology',
             tagline: 'Debugging the skies!',
-            body: '#00BCD4',
-            belly: '#B2EBF2',
-            wing: '#0097A7',
+            // Deepened from #00BCD4 to stand out against the bright cyan day sky
+            body: '#00838F',
+            belly: '#80DEEA',
+            wing: '#004D5A',
             beak: '#FF9800',
             eye: '#FFFFFF',
             pupil: '#1A237E',
-            crest: '#00838F',
+            crest: '#00ACC1',
             accent: '#76FF03',
             // Pixel body shape (14x12) — 1=body, 2=belly, 3=wing, 4=beak, 5=eye, 6=pupil, 7=crest, 8=accent
             pixels: null // We draw procedurally below

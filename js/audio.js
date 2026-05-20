@@ -238,6 +238,14 @@ const Audio = (() => {
         menuBack() {
             playNote(330, 0.08, 'square', 0.15);
             playNote(220, 0.1, 'square', 0.12, 0.06);
+        },
+
+        // Thunder rumble — low-frequency noise + tail
+        thunder() {
+            playNoise(0.15, 0.4);              // initial crack
+            playNote(70, 1.4, 'sawtooth', 0.22, 0.05);  // deep rumble
+            playNote(45, 1.6, 'triangle', 0.18, 0.18);  // sub-rumble
+            playNoise(1.2, 0.15, 0.25);        // rolling tail
         }
     };
 })();
