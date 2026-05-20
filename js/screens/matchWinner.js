@@ -108,7 +108,7 @@ const MatchWinner = (() => {
         }
 
         Particles.update(dt);
-        Background.update(0);
+        Background.update(0, dt);
 
         return null;
     }

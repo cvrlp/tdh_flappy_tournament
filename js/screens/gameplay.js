@@ -103,7 +103,7 @@ const Gameplay = (() => {
                     Transitions.flash('#FFFFFF');
                 }
             }
-            Background.update(0);
+            Background.update(0, dt);
             Particles.update(dt);
             return null;
         }
@@ -153,7 +153,7 @@ const Gameplay = (() => {
             }
         }
 
-        Background.update(Pipes.getSpeed());
+        Background.update(Pipes.getSpeed(), dt);
         Particles.update(dt);
 
         // Score pop animation

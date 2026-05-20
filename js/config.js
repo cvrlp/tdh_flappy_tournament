@@ -50,6 +50,19 @@ const CONFIG = {
     GAP_SHRINK_AMOUNT: 4,    // pixels per interval
     SPEED_INCREASE: 0.2,     // speed per interval
 
+    // Moving pipes (oscillate vertically once difficulty ramps)
+    PIPE_OSC_START_LEVEL: 4,      // first difficulty level that produces moving pipes (score >= START_LEVEL * DIFFICULTY_INTERVAL)
+    PIPE_OSC_AMPLITUDE_STEP: 8,   // px added to amplitude per level beyond start
+    PIPE_OSC_AMPLITUDE_MAX: 40,   // hard cap on px amplitude
+    PIPE_OSC_FREQ: 1.5,           // radians/sec — how fast pipes wobble
+
+    // Day/night cycle
+    DAY_NIGHT_PERIOD_SEC: 120,    // full cycle length (day → dusk → night → dawn → day)
+    PALETTE_DAY:   { skyTop: '#4ec5f1', skyBottom: '#87CEEB', ground: '#8B7355', groundDark: '#6B5335' },
+    PALETTE_DUSK:  { skyTop: '#ff7e5f', skyBottom: '#feb47b', ground: '#5d4037', groundDark: '#3e2723' },
+    PALETTE_NIGHT: { skyTop: '#0d1421', skyBottom: '#1a1a2e', ground: '#1f1f2e', groundDark: '#0f0f1c' },
+    PALETTE_DAWN:  { skyTop: '#7e57c2', skyBottom: '#ffab91', ground: '#6d4c41', groundDark: '#4e342e' },
+
     // Rounds
     ROUNDS_TO_WIN: 2,
 

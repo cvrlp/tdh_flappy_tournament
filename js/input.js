@@ -10,7 +10,12 @@ const Input = (() => {
     const prevKeys = {};
 
     // Gamepad state
-    const prevGamepadButtons = [[], []];
+    // Polled at requestAnimationFrame rate (see Input.poll) so brief presses that happen
+    // between logic ticks aren't dropped. Buffers latch on edge and clear at endFrame.
+    const gamepadPrevButtons = [{}, {}];
+    const gamepadButtonBuffer = [{}, {}];
+    const gamepadPrevAxis = [{}, {}];
+    const gamepadAxisBuffer = [{}, {}];
     let gamepadsConnected = [false, false];
 
     // Key mappings — P1 and P2 have SEPARATE keys (no overlap)
@@ -56,9 +61,48 @@ const Input = (() => {
         });
     }
 
-    // Call at end of each frame
+    // Call at end of each logic tick to drain edge-triggered buffers
     function endFrame() {
         Object.keys(keysJustPressed).forEach(k => keysJustPressed[k] = false);
+        for (let i = 0; i < 2; i++) {
+            gamepadButtonBuffer[i] = {};
+            gamepadAxisBuffer[i] = {};
+        }
+    }
+
+    // Sample gamepad state at requestAnimationFrame rate. Brief presses that happen
+    // between logic ticks (common on >60Hz monitors) get latched here and consumed
+    // by the next logic tick.
+    function pollGamepads() {
+        const pads = getGamepads();
+        for (let i = 0; i < 2; i++) {
+            const pad = pads[i];
+            if (!pad) continue;
+            // Buttons
+            for (let b = 0; b < pad.buttons.length; b++) {
+                const pressed = !!(pad.buttons[b] && pad.buttons[b].pressed);
+                const wasPressed = gamepadPrevButtons[i][b] === true;
+                if (pressed && !wasPressed) {
+                    gamepadButtonBuffer[i][b] = true;
+                }
+                gamepadPrevButtons[i][b] = pressed;
+            }
+            // Axes — treated as directional buttons for menu nav
+            const dz = 0.5;
+            const axisStates = {
+                up:    pad.axes[1] < -dz,
+                down:  pad.axes[1] >  dz,
+                left:  pad.axes[0] < -dz,
+                right: pad.axes[0] >  dz,
+            };
+            for (const dir of ['up', 'down', 'left', 'right']) {
+                const wasActive = gamepadPrevAxis[i][dir] === true;
+                if (axisStates[dir] && !wasActive) {
+                    gamepadAxisBuffer[i][dir] = true;
+                }
+                gamepadPrevAxis[i][dir] = axisStates[dir];
+            }
+        }
     }
 
     // Check if a key was just pressed this frame
@@ -76,14 +120,9 @@ const Input = (() => {
         return navigator.getGamepads ? navigator.getGamepads() : [];
     }
 
-    // Check if a gamepad button was just pressed
+    // Check if a gamepad button was just pressed (reads the rAF-polled buffer)
     function gamepadButtonJustPressed(padIndex, buttonIndex) {
-        const pads = getGamepads();
-        const pad = pads[padIndex];
-        if (!pad) return false;
-        const current = pad.buttons[buttonIndex] && pad.buttons[buttonIndex].pressed;
-        const prev = prevGamepadButtons[padIndex] && prevGamepadButtons[padIndex][buttonIndex];
-        return current && !prev;
+        return gamepadButtonBuffer[padIndex][buttonIndex] === true;
     }
 
     // Check if ANY button on a gamepad was just pressed (for flap)
@@ -107,35 +146,18 @@ const Input = (() => {
         return false;
     }
 
-    // Get gamepad D-pad / left stick direction (just pressed)
+    // Get gamepad D-pad / left stick direction (just pressed) — reads rAF-polled buffers
     function gamepadMenuDirection(padIndex) {
-        const pads = getGamepads();
-        const pad = pads[padIndex];
-        if (!pad) return null;
-
         // D-pad buttons (standard mapping: 12=up, 13=down, 14=left, 15=right)
         if (gamepadButtonJustPressed(padIndex, 12)) return 'up';
         if (gamepadButtonJustPressed(padIndex, 13)) return 'down';
         if (gamepadButtonJustPressed(padIndex, 14)) return 'left';
         if (gamepadButtonJustPressed(padIndex, 15)) return 'right';
-
-        // Left stick (with deadzone)
-        const axes = pad.axes;
-        const deadzone = 0.5;
-        // Simple threshold-based detection for stick
-        if (axes[1] < -deadzone && !(prevGamepadButtons[padIndex]['axisUp'])) {
-            return 'up';
-        }
-        if (axes[1] > deadzone && !(prevGamepadButtons[padIndex]['axisDown'])) {
-            return 'down';
-        }
-        if (axes[0] < -deadzone && !(prevGamepadButtons[padIndex]['axisLeft'])) {
-            return 'left';
-        }
-        if (axes[0] > deadzone && !(prevGamepadButtons[padIndex]['axisRight'])) {
-            return 'right';
-        }
-
+        // Left stick
+        if (gamepadAxisBuffer[padIndex]['up'])    return 'up';
+        if (gamepadAxisBuffer[padIndex]['down'])  return 'down';
+        if (gamepadAxisBuffer[padIndex]['left'])  return 'left';
+        if (gamepadAxisBuffer[padIndex]['right']) return 'right';
         return null;
     }
 
@@ -149,36 +171,12 @@ const Input = (() => {
         return gamepadButtonJustPressed(padIndex, 1); // B / Circle
     }
 
-    // Store previous gamepad state (call at end of frame)
-    function updateGamepadPrev() {
-        const pads = getGamepads();
-        for (let i = 0; i < 2; i++) {
-            const pad = pads[i];
-            if (!pad) {
-                prevGamepadButtons[i] = [];
-                continue;
-            }
-            prevGamepadButtons[i] = {};
-            for (let b = 0; b < pad.buttons.length; b++) {
-                prevGamepadButtons[i][b] = pad.buttons[b].pressed;
-            }
-            // Store axis states for direction detection
-            const deadzone = 0.5;
-            prevGamepadButtons[i]['axisUp'] = pad.axes[1] < -deadzone;
-            prevGamepadButtons[i]['axisDown'] = pad.axes[1] > deadzone;
-            prevGamepadButtons[i]['axisLeft'] = pad.axes[0] < -deadzone;
-            prevGamepadButtons[i]['axisRight'] = pad.axes[0] > deadzone;
-        }
-    }
-
     // ---- Public API ----
 
     return {
         init,
-        endFrame() {
-            endFrame();
-            updateGamepadPrev();
-        },
+        poll: pollGamepads,
+        endFrame,
 
         // Gameplay: did player flap?
         isFlap(playerIndex) {

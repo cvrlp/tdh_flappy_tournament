@@ -11,13 +11,31 @@ const GameOverSP = (() => {
     let highScore = 0;
     let isNewHighScore = false;
     let selectedOption = 0;
+    let currentQuote = null;
     const options = ['RETRY', 'MAIN MENU'];
+
+    // Real quotes about death and falling
+    const QUOTES = [
+        { text: 'Our greatest glory is not in never falling, but in rising every time we fall.', by: 'Confucius' },
+        { text: 'Fall seven times, stand up eight.', by: 'Japanese Proverb' },
+        { text: 'Cowards die many times before their deaths; the valiant never taste of death but once.', by: 'Shakespeare' },
+        { text: 'To die will be an awfully big adventure.', by: 'J.M. Barrie' },
+        { text: 'Death is but the next great adventure.', by: 'J.K. Rowling' },
+        { text: 'It is not death that a man should fear, but never beginning to live.', by: 'Marcus Aurelius' },
+        { text: 'Do not go gentle into that good night.', by: 'Dylan Thomas' },
+        { text: 'Every man dies. Not every man really lives.', by: 'Braveheart' },
+        { text: 'Ask not for whom the bell tolls; it tolls for thee.', by: 'John Donne' },
+        { text: 'The reports of my death have been greatly exaggerated.', by: 'Mark Twain' },
+        { text: 'Death is not the greatest loss in life. The greatest loss is what dies inside us while we live.', by: 'Norman Cousins' },
+        { text: 'When you were born you cried and the world rejoiced. Live so that when you die the world cries and you rejoice.', by: 'Cherokee Proverb' },
+    ];
 
     function enter(goData) {
         data = goData;
         timer = 0;
         canContinue = false;
         selectedOption = 0;
+        currentQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
         Audio.stopMusic();
 
         // High score
@@ -67,6 +85,12 @@ const GameOverSP = (() => {
         Renderer.drawOverlay(0.65);
 
         const cx = CONFIG.WIDTH / 2;
+
+        // Quote (above GAME OVER)
+        if (currentQuote) {
+            Renderer.drawText(currentQuote.text, cx, 55, 7, '#CCCCCC', 'center', true);
+            Renderer.drawText(`— ${currentQuote.by}`, cx, 85, 6, '#888888', 'center', true);
+        }
 
         Renderer.drawTextOutlined('GAME OVER', cx, 120, 18, '#EF5350', '#000');
 

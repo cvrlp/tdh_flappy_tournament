@@ -107,6 +107,10 @@ const Game = (() => {
         const dt = Math.min((timestamp - lastTime) / 1000, 0.05); // cap delta
         lastTime = timestamp;
 
+        // Sample gamepads at monitor refresh rate — captures brief presses that
+        // would otherwise be missed between fixed-timestep logic ticks.
+        Input.poll();
+
         // Update transitions (runs at monitor refresh rate for smoothness)
         Transitions.update(dt);
 
@@ -118,11 +122,11 @@ const Game = (() => {
 
             switch (currentState) {
                 case CONFIG.STATES.MAIN_MENU:
-                    Background.update(0.5);
+                    Background.update(0.5, FIXED_TIME_STEP);
                     result = MainMenu.update(FIXED_TIME_STEP);
                     break;
                 case CONFIG.STATES.CHAR_SELECT:
-                    Background.update(0.5);
+                    Background.update(0.5, FIXED_TIME_STEP);
                     result = CharSelect.update(FIXED_TIME_STEP);
                     break;
                 case CONFIG.STATES.GAMEPLAY:
