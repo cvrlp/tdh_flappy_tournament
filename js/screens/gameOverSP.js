@@ -16,20 +16,23 @@ const GameOverSP = (() => {
 
     // Real quotes about death and falling
     const QUOTES = [
-        { text: 'Sige na, ako na 🔗', by: 'Jemuel Jason O.' },
+        { text: 'Sige na, ako na', by: 'Jemuel Jason O.' },
         { text: 'Ang umaayaw ay hindi nag wawagi', by: 'Allan A.' },
         { text: 'With great power, comes great responsibility', by: 'Spider Man' },
         { text: 'HAHAHAHAHA', by: 'Marvin Jhay T.' },
         { text: 'Pogi ako', by: 'Oswald Lester A.' },
-        { text: 'Hindi nyo dapat ginagawang joke ang trauma', by: 'A\u00b2ron' },
+        { text: 'Hindi nyo dapat ginagawang joke ang trauma', by: 'A\u00b2ron P.' },
         { text: 'Bakal ako', by: 'Dev_Kyle12' },
-        { text: 'Di pre medyo nakakabastos din kasi yung gif tas wlaa pa consent niya', by: 'Christiann Marc D.' },
+        { text: 'Di pre medyo nakakabastos din kasi yung gif tas wala pa consent niya', by: 'Christiann Marc D.' },
         { text: 'Ngayon lang ako napikon', by: 'Oshy ko' },
-        { text: 'Minsan mga sir kasi sumusobra pabibo natin eh. Minsan isip muna tayo bago magsend. yun lang po salamat.', by: 'Oswald Lester A.' },
+        { text: 'Minsan mga sir kasi sumusobra pabibo natin eh. Minsan isip muna tayo bago magsend. yun lang po salamat.', by: 'Oshuwaru Ambatsu' },
         { text: 'Sikuhin kita sa mata!', by: 'John Christopher S. tagapagligtas' },
         { text: 'Baka po may nakalimot po sa sa bayad po hopia', by: 'Crystel Dianne B. / Jasmine T.' },
-        { text: 'Be the change, to say the world', by: 'Miguellito P.' },
-        { text: 'Bunits ka lang, hindi ka baldado', by: 'Marc Jerdyzxc M.' },
+        { text: 'Be the change to say the word', by: 'Miguellito P.' },
+        { text: 'Buntis ka lang, hindi ka baldado', by: 'Marc Jerdyzxc M.' },
+        { text: 'Napupuno pero di nabubusog', by: 'Boss Cha' },
+        { text: 'Sino tumae sa 3rd floor?', by: 'Jann Eliezar F.' },
+
     ];
 
     function enter(goData) {
