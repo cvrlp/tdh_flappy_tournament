@@ -16,18 +16,20 @@ const GameOverSP = (() => {
 
     // Real quotes about death and falling
     const QUOTES = [
-        { text: 'Our greatest glory is not in never falling, but in rising every time we fall.', by: 'Confucius' },
-        { text: 'Fall seven times, stand up eight.', by: 'Japanese Proverb' },
-        { text: 'Cowards die many times before their deaths; the valiant never taste of death but once.', by: 'Shakespeare' },
-        { text: 'To die will be an awfully big adventure.', by: 'J.M. Barrie' },
-        { text: 'Death is but the next great adventure.', by: 'J.K. Rowling' },
-        { text: 'It is not death that a man should fear, but never beginning to live.', by: 'Marcus Aurelius' },
-        { text: 'Do not go gentle into that good night.', by: 'Dylan Thomas' },
-        { text: 'Every man dies. Not every man really lives.', by: 'Braveheart' },
-        { text: 'Ask not for whom the bell tolls; it tolls for thee.', by: 'John Donne' },
-        { text: 'The reports of my death have been greatly exaggerated.', by: 'Mark Twain' },
-        { text: 'Death is not the greatest loss in life. The greatest loss is what dies inside us while we live.', by: 'Norman Cousins' },
-        { text: 'When you were born you cried and the world rejoiced. Live so that when you die the world cries and you rejoice.', by: 'Cherokee Proverb' },
+        { text: 'Sige na, ako na 🔗', by: 'Jemuel Jason O.' },
+        { text: 'Ang umaayaw ay hindi nag wawagi', by: 'Allan A.' },
+        { text: 'With great power, comes great responsibility', by: 'Spider Man' },
+        { text: 'HAHAHAHAHA', by: 'Marvin Jhay T.' },
+        { text: 'Pogi ako', by: 'Oswald Lester A.' },
+        { text: 'Hindi nyo dapat ginagawang joke ang trauma', by: 'A\u00b2ron' },
+        { text: 'Bakal ako', by: 'Dev_Kyle12' },
+        { text: 'Di pre medyo nakakabastos din kasi yung gif tas wlaa pa consent niya', by: 'Christiann Marc D.' },
+        { text: 'Ngayon lang ako napikon', by: 'Oshy ko' },
+        { text: 'Minsan mga sir kasi sumusobra pabibo natin eh. Minsan isip muna tayo bago magsend. yun lang po salamat.', by: 'Oswald Lester A.' },
+        { text: 'Sikuhin kita sa mata!', by: 'John Christopher S. tagapagligtas' },
+        { text: 'Baka po may nakalimot po sa sa bayad po hopia', by: 'Crystel Dianne B. / Jasmine T.' },
+        { text: 'Be the change, to say the world', by: 'Miguellito P.' },
+        { text: 'Bunits ka lang, hindi ka baldado', by: 'Marc Jerdyzxc M.' },
     ];
 
     function enter(goData) {
